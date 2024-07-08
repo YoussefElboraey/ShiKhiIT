@@ -45,13 +45,15 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 	$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+	if (isset($_GET["UN"]) && count($employees) === 1) $employees = $employees[0];
+
 	if (count($employees) > 0) {
 
 		echo json_encode([
 			"status" => "success",
 			"code" => 200,
 			"message" => "All Data Has Been Retrieved.",
-			"data" => $employees[0],
+			"data" => $employees,
 			"metadata" => ["records" => count($employees)]
 		]);
 
@@ -59,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 		echo json_encode([
 			"status" => "success",
-			"code" => 200,
+			"code" => 404,
 			"message" => "No Data Available.",
 			"data" => NUll
 		]);

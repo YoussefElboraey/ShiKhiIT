@@ -4,14 +4,16 @@ require("/var/www/ShiKhiIT/core/init.php");
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
-	if (isset($_GET["from"]) && isset($_GET["N"])) {
+	if (isset($_GET["from"])) {
 
-		if (is_numeric($_GET["from"]) && is_numeric($_GET["N"])) {
+		$default_number_of_articles = 3;
+
+		if (is_numeric($_GET["from"])) {
 
 			$start_index = $_GET["from"];
-			$number_of_comments = $_GET["N"] - 1;
+			$number_of_articles = (isset($_GET["N"]) && is_numeric($_GET["N"])) ? $_GET["N"] - 1 : $default_number_of_articles;
 
-			$query = "SELECT Reviews.id, first_name, last_name, job, image_path, comment, stars, created_at FROM Reviews JOIN Users ON Reviews.user_id = Users.id WHERE type = 'client' AND Reviews.id BETWEEN $start_index AND $start_index + $number_of_comments ORDER BY Reviews.id";
+			$query = "SELECT * FROM Articles WHERE id >= $start_index ORDER BY id LIMIT $number_of_articles";
 		
 		} else {
 
@@ -19,9 +21,13 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 		}
 
+	} elseif (isset($_GET["tag"])) {
+
+		$query = "SELECT * FROM Articles WHERE tags LIKE '%" . $_GET["tag"] . "%'";
+
 	} else {
 
-		$query = "SELECT Reviews.id, first_name, last_name, job, image_path, comment, stars, created_at FROM Reviews JOIN Users ON Reviews.user_id = Users.id WHERE type = 'client' ORDER BY Reviews.id";
+		$query = "SELECT * FROM Articles LIMIT 5";
 
 	}
 
@@ -34,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 		echo json_encode([
 			"status" => "failure",
 			"code" => 500,
-			"message" => "Unable To Fetch Reviews."
+			"message" => "Unable To Fetch Articles."
 		]);
 
 		exit(0);
@@ -67,6 +73,5 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 	exit(0);
 
 }
-
 
 ?>

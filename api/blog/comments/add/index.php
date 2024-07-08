@@ -19,35 +19,28 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 	$request_data = json_decode(file_get_contents("php://input"), true);
 
 	$identifier = $request_data["identifier"];
+	$article_id = $request_data["article_id"];
 	$comment = $request_data["comment"];
-	$stars = $request_data["stars"];
+	$reply_to = (!empty($request_data["reply_to"])) ? $request_data["reply_to"] : Null ;
 
-	if (!empty($identifier) && !empty($comment) && !empty($stars)) {
+	if (!empty($identifier) && !empty($comment) && !empty($article_id)) {
 
-		$stmt = $Database->prepare("SELECT type FROM `Users` WHERE id = (SELECT user_id FROM Identifiers WHERE identifier = :identifier) AND type = 'client'");
+		$stmt = $Database->prepare("SELECT user_id FROM Identifiers WHERE identifier = :identifier");
+
 		$stmt->execute(["identifier" => $identifier]);
 
-		if (count($stmt->fetchAll(PDO::FETCH_ASSOC)) !== 1) {
-
-			echo json_encode([
-				"status" => "failure",
-				"code" => 409,
-				"message" => "Not A Client."
-			]);
-
-			exit(0);
-
-		}
+		$stmt->bindColumn("user_id", $user_id);
+		$stmt->fetch(PDO::FETCH_BOUND);
 
 		try {
 
-			$stmt = $Database->prepare("INSERT INTO `Reviews` (user_id, comment, stars) VALUES ((SELECT user_id FROM Identifiers WHERE identifier = :identifier), :comment, :stars)");
-			$stmt->execute(["identifier" => $identifier, "comment" => $comment, "stars" => $stars]);
+			$stmt = $Database->prepare("INSERT INTO `Comments` (user_id, article_id, comment, reply_to) VALUES (:user_id, :article_id, :comment, :reply_to)");
+			$stmt->execute(["user_id" => $user_id, "article_id" => $article_id, "comment" => $comment, "reply_to" => $reply_to]);
 
 			echo json_encode([
 				"status" => "success",
 				"code" => 201,
-				"message" => "Review Has Been Added."
+				"message" => "Comment Has Been Added."
 			]);
 
 			exit(0);
@@ -57,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 			echo json_encode([
 				"status" => "failure",
 				"code" => 500,
-				"message" => "Unable To Add Review."
+				"message" => "Unable To Add Comment."
 			]);
 
 			exit(0);

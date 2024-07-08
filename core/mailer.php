@@ -1,6 +1,6 @@
 <?php
 
-require "PHPMailer/autoload.php";
+require "modules/PHPMailer/autoload.php";
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -16,7 +16,7 @@ try {
 	$mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 	$mailer->Port = 587;
 	$mailer->Username = "";
-	$mailer->Password = "";
+	$mailer->Password = ;
 
 	$mailer->SMTPOptions = array("ssl" => array(
 

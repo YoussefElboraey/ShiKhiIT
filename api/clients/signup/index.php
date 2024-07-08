@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 	if (!empty($request_data["first_name"]) && !empty($request_data["last_name"]) && !empty($request_data["email"]) && !empty($request_data["password"])) {
 
-		require "/var/www/ShiKhiIT/core/identifiers.php"; // Identifiers Creator.
+		require "/var/www/ShiKhiIT/core/functions/identifiers.php"; // identifiers Creator.
 
 		$first_name = $request_data["first_name"];
 		$last_name = $request_data["last_name"];
