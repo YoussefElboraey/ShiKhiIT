@@ -11,11 +11,11 @@ try {
 
 	$mailer->isSMTP();
 
-	$mailer->Host = "";
+	$mailer->Host = "mail.gym.c1.is";
 	$mailer->SMTPAuth = true;
 	$mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 	$mailer->Port = 587;
-	$mailer->Username = "";
+	$mailer->Username = "test@gym.c1.is";
 	$mailer->Password = ;
 
 	$mailer->SMTPOptions = array("ssl" => array(
@@ -26,7 +26,7 @@ try {
 
 	));
 
-	$mailer->setFrom("" , "ShiKhiIT");
+	$mailer->setFrom("test@gym.c1.is" , "ShiKhiIT");
 	$mailer->addAddress($email , $first_name);
 
 	$mailer->isHTML(true);
