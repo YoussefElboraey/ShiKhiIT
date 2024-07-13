@@ -39,32 +39,15 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 	}
 
-	try {
+	$tasks = $Database->customQuery($query, [], True);
 
-		$stmt = $Database->prepare($query);
-		$stmt->execute();
-
-		$tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-		echo json_encode([
-			"status" => "success",
-			"code" => 200,
-			"message" => "All Data Has Been Retrieved.",
-			"data" => $tasks,
-			"metadata" => ["records" => count($tasks)]
-		]);
-
-	} catch (PDOException $Error) {
-
-		echo json_encode([
-			"status" => "failure",
-			"code" => 500,
-			"message" => "Unable To Fetch Tasks."
-		]);
-
-		exit(0);
-
-	}
+	echo json_encode([
+		"status" => "success",
+		"code" => 200,
+		"message" => "All Data Has Been Retrieved.",
+		"data" => $tasks,
+		"metadata" => ["records" => $Database->rowCount]
+	]);
 
 }
 

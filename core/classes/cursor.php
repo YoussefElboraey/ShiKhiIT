@@ -1,12 +1,14 @@
 <?php
 
 /**
- * Cursor Provied Some Common Querys As Function
+ * Cursor Provied Some Common MySQL Querys As Functions
  */
 
 class Cursor {
 
 	private $Database;
+
+	public int $rowCount;
 	
 	public function __construct(string $host, string $user, string $password, string $DBName) {
 
@@ -37,7 +39,7 @@ class Cursor {
 
 	private function sqlify(string $caller, array $data) {
 
-		if ($caller === "get") {
+		if ($caller === "get" || $caller === "update" || $caller === "delete") {
 
 			$sqledConditions = "";
 
@@ -55,7 +57,7 @@ class Cursor {
 
 			return $sqledConditions;
 
-		} elseif ($caller === "put") {
+		} elseif ($caller === "insert") {
 
 			$columns = "(";
 			$values = "(";
@@ -87,7 +89,7 @@ class Cursor {
 
 	}
 
-	public function put(string $table, array $records) {
+	public function insert(string $table, array $records) {
 
 		$sqled = $this->sqlify(__FUNCTION__, $records);
 
@@ -100,7 +102,11 @@ class Cursor {
 
 			$stmt->execute($records);
 
+			return $this->Database->lastInsertId();
+
 		} catch (PDOException $Error) {
+
+			die($Error->getMessage());
 
 			echo json_encode([
 				"status" => "failure",
@@ -126,7 +132,11 @@ class Cursor {
 
 			$records = $stmt->fetchAll();
 
-			return (!empty($target)) ? $records[0][$target] : $records ;
+			$this->rowCount = $stmt->rowCount();
+
+			if (!empty($target)) return (isset($records[0][$target])) ? $records[0][$target] : 0 ;
+
+			return $records;
 
 		} catch (PDOException $Error) {
 
@@ -144,7 +154,7 @@ class Cursor {
 
 	public function update(string $table, array $records, array $conditions=["true" => "1"]) {
 
-		$sqledConditions = $this->sqlify($conditions);
+		$sqledConditions = $this->sqlify(__FUNCTION__, $conditions);
 
 		$prepareddata = "";
 
@@ -182,7 +192,7 @@ class Cursor {
 
 	public function delete(string $table, array $conditions=["true" => "1"]) {
 
-		$sqledConditions = $this->sqlify($conditions);
+		$sqledConditions = $this->sqlify(__FUNCTION__, $conditions);
 
 		try {
 
@@ -204,13 +214,15 @@ class Cursor {
 
 	}
 
-	public function custom(string $query, array $values=[], bool $isReturnable=false) {
+	public function customQuery(string $query, array $values=[], bool $isReturnable=False) {
 
 		try {
 
 			$stmt = $this->Database->prepare($query);
 
 			if (empty($values)) $stmt->execute(); else $stmt->execute($values);
+
+			$this->rowCount = $stmt->rowCount();
 
 			if ($isReturnable) return $stmt->fetchAll();
 

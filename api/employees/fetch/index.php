@@ -4,57 +4,38 @@ require("/var/www/ShiKhiIT/core/init.php");
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
-	try {
+	if (isset($_GET["N"])) {
 
-		if (isset($_GET["N"])) {
-
-			if (is_numeric($_GET["N"])) {
-			
-				$stmt = $Database->prepare("SELECT first_name, last_name, username, image_path, position, practice_area, experience, address, phone, email, about, education, languages, linkedin FROM Employees LIMIT " . $_GET["N"]);
-				$stmt->execute();
-			
-			} else {
-
-				exit(0);
-
-			}
-
-		} elseif (isset($_GET["UN"])) {
-
-			$stmt = $Database->prepare("SELECT first_name, last_name, username, image_path, position, practice_area, skills, experience, address, phone, email, about, education, languages, linkedin FROM Employees WHERE username = :username");
-			$stmt->execute(["username" => $_GET["UN"]]);
-
+		if (is_numeric($_GET["N"])) {
+		
+			$employees = $Database->customQuery("first_name, last_name, username, image_path, position, practice_area, experience, address, phone, email, about, education, languages, linkedin FROM Employees LIMIT " . $_GET["N"]);
+		
 		} else {
 
-			$stmt = $Database->prepare("SELECT first_name, last_name, username, image_path, position, practice_area, experience, address, phone, email, about, education, languages, linkedin FROM Employees");
-			$stmt->execute();
+			exit(0);
 
 		}
 
-	} catch (PDOException $Error) {
+	} elseif (isset($_GET["UN"])) {
 
-		echo json_encode([
-			"status" => "failure",
-			"code" => 500,
-			"message" => "Unable To Fetch Employees."
-		]);
+		$employees = $Database->get("first_name, last_name, username, image_path, position, practice_area, skills, experience, address, phone, email, about, education, languages, linkedin", "Employees", ["username" => $_GET["UN"]]);
 
-		exit(0);
+	} else {
+
+		$employees = $Database->get("first_name, last_name, username, image_path, position, practice_area, experience, address, phone, email, about, education, languages, linkedin", "Employees");
 
 	}
 
-	$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	if (isset($_GET["UN"]) && $Database->rowCount === 1) $employees = $employees[0];
 
-	if (isset($_GET["UN"]) && count($employees) === 1) $employees = $employees[0];
-
-	if (count($employees) > 0) {
+	if ($Database->rowCount) {
 
 		echo json_encode([
 			"status" => "success",
 			"code" => 200,
 			"message" => "All Data Has Been Retrieved.",
 			"data" => $employees,
-			"metadata" => ["records" => count($employees)]
+			"metadata" => ["records" => $Database->rowCount]
 		]);
 
 	} else {
@@ -62,8 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 		echo json_encode([
 			"status" => "success",
 			"code" => 404,
-			"message" => "No Data Available.",
-			"data" => NUll
+			"message" => "No Data Available."
 		]);
 
 	}

@@ -14,12 +14,10 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 	$identifier = $_POST["identifier"];
 
-	$stmt = $Database->prepare("SELECT user_id FROM Identifiers WHERE identifier = :identifier");
+	// print_r($_POST);
+	// exit;
 
-	$stmt->execute(["identifier" => $identifier]);
-
-	$stmt->bindColumn("user_id", $user_id);
-	$stmt->fetch(PDO::FETCH_BOUND);
+	$user_id = $Database->get("user_id", "Identifiers", ["identifier" => $identifier], "user_id");
 
 	if (!$user_id) {
 
@@ -33,52 +31,26 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 	}
 
-	if ($_FILES["picture"]["size"] > 0) {
+	if (isset($_FILES["picture"])) {
 
-		if ($_FILES["picture"]["error"] !== 0) {
+		if ($_FILES["picture"]["size"] > 0) {
 
-			echo json_encode([
-				"status" => "failure",
-				"code" => 400,
-				"message" => "Please Choose Another Picture"
-			]);
+			if ($_FILES["picture"]["error"] !== 0) {
 
-			exit(0);
+				echo json_encode([
+					"status" => "failure",
+					"code" => 400,
+					"message" => "Please Choose Another Picture"
+				]);
 
-		}
+				exit(0);
 
-		$image_extension = strtolower(@end(explode(".", $_FILES["picture"]["name"])));
-		$allowed_image_extensions = ["png", "jpg", "jpeg"];
+			}
 
-		if (!in_array($image_extension, $allowed_image_extensions)) {
+			$image_extension = strtolower(@end(explode(".", $_FILES["picture"]["name"])));
+			$allowed_image_extensions = ["png", "jpg", "jpeg"];
 
-			echo json_encode([
-				"status" => "failure",
-				"code" => 400,
-				"message" => "Image Extension Not Supported"
-			]);
-
-			exit(0);
-
-		}
-
-		$image_type = getimagesize($_FILES["picture"]["tmp_name"])[2];
-
-		switch ($image_type) {
-
-			case IMAGETYPE_JPEG:
-
-				$image = imagecreatefromjpeg($_FILES["picture"]["tmp_name"]);
-
-				break;
-
-			case IMAGETYPE_PNG:
-
-				$image = imagecreatefrompng($_FILES["picture"]["tmp_name"]);
-
-				break;
-			
-			default:
+			if (!in_array($image_extension, $allowed_image_extensions)) {
 
 				echo json_encode([
 					"status" => "failure",
@@ -88,31 +60,45 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 				exit(0);
 
+			}
+
+			$image_type = getimagesize($_FILES["picture"]["tmp_name"])[2];
+
+			switch ($image_type) {
+
+				case IMAGETYPE_JPEG:
+
+					$image = imagecreatefromjpeg($_FILES["picture"]["tmp_name"]);
+
+					break;
+
+				case IMAGETYPE_PNG:
+
+					$image = imagecreatefrompng($_FILES["picture"]["tmp_name"]);
+
+					break;
+				
+				default:
+
+					echo json_encode([
+						"status" => "failure",
+						"code" => 400,
+						"message" => "Image Extension Not Supported"
+					]);
+
+					exit(0);
+
+			}
+
+			$image_random_name = bin2hex(random_bytes(8));
+
+			imagewebp($image, "/var/www/ShiKhiIT/profile_pictures/$image_random_name.webp", 30);
+
+			imagedestroy($image);
+
+			$Database->update("Users", ["image_path" => "profile_pictures/$image_random_name.webp"], ["id" => $user_id]);
+
 		}
-
-		$image_random_name = bin2hex(random_bytes(8));
-
-		imagewebp($image, "/var/www/ShiKhiIT/profile_pictures/$image_random_name.webp", 30);
-
-		imagedestroy($image);
-
-		try {
-
-			$stmt = $Database->prepare("UPDATE `Users` SET image_path = 'profile_pictures/$image_random_name.webp' WHERE id = $user_id");
-			$stmt->execute();
-
-		} catch (PDOException $Error) {
-
-			echo json_encode([
-				"status" => "failure",
-				"code" => 500,
-				"message" => "Unable To Update Profile Picture."
-			]);
-
-			exit(0);
-
-		}
-		
 
 	}
 
@@ -120,44 +106,11 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 		$allowed_fields = ["first_name", "last_name", "username", "job", "bio", "company", "password"];
 
-		foreach ($_POST as $column => $value) {
+		if (isset($_POST["password"])) $_POST["password"] = md5($_POST["password"]);
 
-			if ($column === "identifier" || empty($value)) continue;
+		unset($_POST["identifier"]);
 
-			if (!in_array($column, $allowed_fields)) exit(0);
-
-			if ($column === "email" || $column === "password") {
-
-				$table = "Credentials";
-				$condetion_column = "user_id";
-
-				if ($column === "password") $value = md5($value);
-
-			} else {
-
-				$table = "Users";
-				$condetion_column = "id";
-
-			}
-
-			try {
-
-				$stmt = $Database->prepare("UPDATE $table SET $column = :value WHERE $condetion_column = $user_id");
-				$stmt->execute(["value" => $value]);
-
-			} catch (PDOException $Error) {
-
-				echo json_encode([
-					"status" => "failure",
-					"code" => 500,
-					"message" => "Unable To Update User Data."
-				]);
-
-				exit(0);
-
-			}
-
-		}
+		$Database->update("Users", array_filter($_POST), ["id" => $user_id]);
 
 	}
 

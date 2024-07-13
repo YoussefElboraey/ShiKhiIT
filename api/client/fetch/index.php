@@ -8,25 +8,9 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 		$identifier = $_GET["identifier"];
 
-		try {
+		$user_id = $Database->get("user_id", "Identifiers", ["identifier" => $identifier], "user_id");
 
-			$stmt = $Database->prepare("SELECT first_name, last_name, username, email, job, bio, company, image_path, joined_at, verified FROM Identifiers JOIN Users ON Users.id = Identifiers.user_id JOIN Credentials ON Credentials.user_id = Users.id WHERE identifier = :identifier");
-
-			$stmt->execute(["identifier" => $identifier]);
-
-		} catch (PDOException $Error) {
-
-			echo json_encode([
-				"status" => "failure",
-				"code" => 500,
-				"message" => "Unable To Fetch Users."
-			]);
-
-			exit(0);
-
-		}
-
-		$user_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		$user_data = $Database->get("first_name, last_name, username, email, job, bio, company, image_path, joined_at, verified", "Users", ["id" => $user_id]);
 
 		if (count($user_data) > 0) {
 

@@ -24,10 +24,11 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 	if (!empty($identifier) && !empty($comment) && !empty($stars)) {
 
-		$stmt = $Database->prepare("SELECT type FROM `Users` WHERE id = (SELECT user_id FROM Identifiers WHERE identifier = :identifier) AND type = 'client'");
-		$stmt->execute(["identifier" => $identifier]);
+		$user_id = $Database->get("user_id", "Identifiers", ["identifier" => $identifier], "user_id");
 
-		if (count($stmt->fetchAll(PDO::FETCH_ASSOC)) !== 1) {
+		$user_type = $Database->get("type", "Users", ["id" => $user_id, "type" => "client"], "type");
+
+		if (!$Database->rowCount) {
 
 			echo json_encode([
 				"status" => "failure",
@@ -39,32 +40,17 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 		}
 
-		try {
+		$Database->insert("Reviews", ["user_id" => $user_id, "comment" => $comment, "stars" => $stars]);
 
-			$stmt = $Database->prepare("INSERT INTO `Reviews` (user_id, comment, stars) VALUES ((SELECT user_id FROM Identifiers WHERE identifier = :identifier), :comment, :stars)");
-			$stmt->execute(["identifier" => $identifier, "comment" => $comment, "stars" => $stars]);
+		echo json_encode([
+			"status" => "success",
+			"code" => 201,
+			"message" => "Review Has Been Added."
+		]);
 
-			echo json_encode([
-				"status" => "success",
-				"code" => 201,
-				"message" => "Review Has Been Added."
-			]);
+		exit(0);
 
-			exit(0);
-
-		} catch (PDOException $Error) {
-
-			echo json_encode([
-				"status" => "failure",
-				"code" => 500,
-				"message" => "Unable To Add Review."
-			]);
-
-			exit(0);
-
-		}
-
-	} else { // If There Is Anything Missed
+	} else { // If Anything Missed
 
 		header("HTTP/1.1 400 Bad Request");
 		exit(0);

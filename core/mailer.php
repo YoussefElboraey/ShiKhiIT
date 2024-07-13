@@ -16,7 +16,7 @@ try {
 	$mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 	$mailer->Port = 587;
 	$mailer->Username = "test@gym.c1.is";
-	$mailer->Password = ;
+	$mailer->Password = 12345678;
 
 	$mailer->SMTPOptions = array("ssl" => array(
 

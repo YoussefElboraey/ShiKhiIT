@@ -24,16 +24,16 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 		$first_name = $request_data["first_name"];
 		$last_name = $request_data["last_name"];
+		$username = $request_data["username"];
 		$email = $request_data["email"];
 		$passwd = md5($request_data["password"]);
 		$identifier = create_identifier();
 
 		try {
 
-			$stmt = $Database->prepare("SELECT email FROM `Credentials` WHERE email = :email");
-			$stmt->execute(["email" => $email]);
+			$isExists = $Database->get("id", "Users", ["email" => $email], "id");
 
-			if (count($stmt->fetchAll(PDO::FETCH_ASSOC)) > 0) {
+			if ($isExists) {
 
 				echo json_encode([
 					"status" => "failure",
@@ -41,19 +41,12 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 					"message" => "User Already Exists."
 				]);
 
-				exit;
+				exit(0);
 			}
 
-			$stmt = $Database->prepare("INSERT INTO `Users` (first_name, last_name) VALUES (:first_name , :last_name)");
-			$stmt->execute(["first_name" => $first_name, "last_name" => $last_name]);
+			$user_id = $Database->insert("Users", ["first_name" => $first_name, "last_name" => $last_name, "username" => $username, "email" => $email, "password" => $passwd]);
 
-			$user_id = $Database->lastInsertId();
-
-			$stmt = $Database->prepare("INSERT INTO `Credentials` (user_id, email, password) VALUES (:user_id , :email , :passwd)");
-			$stmt->execute(["user_id" => $user_id, "email" => $email, "passwd" => $passwd]);
-
-			$stmt = $Database->prepare("INSERT INTO `Identifiers` (user_id, identifier) VALUES (:user_id , :identifier)");
-			$stmt->execute(["user_id" => $user_id, "identifier" => $identifier]);
+			$Database->insert("Identifiers", ["user_id" => $user_id, "identifier" => $identifier]);
 
 			echo json_encode([
 				"status" => "success",
@@ -67,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 		} catch (PDOException $Error) {
 
-			$Database->exec("DELETE FROM `Users` WHERE id = $user_id");
+			$Database->delete("Users", ["id" => $user_id]);
 
 			echo json_encode([
 				"status" => "failure",

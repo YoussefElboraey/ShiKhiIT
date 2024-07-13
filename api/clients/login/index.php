@@ -25,22 +25,15 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 		$email = $request_data["email"];
 		$passwd = md5($request_data["password"]);
 
-		$stmt = $Database->prepare("SELECT user_id, email, password FROM `Credentials` WHERE email = :email AND password = :passwd");
+		$user_id = $Database->get("id", "Users", ["email" => $email, "password" => $passwd], "id");
 
-		$stmt->execute(["email" => $email, "passwd" => $passwd]);
-
-		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-		if (count($data) > 0) {
+		if ($user_id) {
 
 			$identifier = create_identifier();
 
-			try {
+			$Database->insert("Identifiers", ["user_id" => $user_id, "identifier" => $identifier]);
 
-				$stmt = $Database->prepare("INSERT INTO `Identifiers` (user_id, identifier) VALUES (:user_id , :identifier)");
-				$stmt->execute(["user_id" => $data[0]["user_id"], "identifier" => $identifier]);
-
-				echo json_encode([
+			echo json_encode([
 				"status" => "success",
 				"code" => 200,
 				"message" => "Login Successful.",
@@ -48,17 +41,6 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 			]);
 
 			exit(0);
-
-			} catch (PDOException $Error) {
-
-				echo json_encode([
-					"status" => "failure",
-					"code" => 500,
-					"message" => "Unable To Confirm User Credentials."
-				]);
-
-				exit;
-			}
 
 		}
 
