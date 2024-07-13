@@ -1,6 +1,6 @@
 <?php
 
-require("/var/www/ShiKhiIT/core/init.php");
+require("../../../core/init.php");
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 

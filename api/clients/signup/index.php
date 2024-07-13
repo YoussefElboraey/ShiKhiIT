@@ -1,6 +1,6 @@
 <?php
 
-require("/var/www/ShiKhiIT/core/init.php");
+require("../../../core/init.php");
 
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
 		$first_name = $request_data["first_name"];
 		$last_name = $request_data["last_name"];
-		$username = $request_data["username"];
+		// $username = $request_data["username"];
 		$email = $request_data["email"];
 		$passwd = md5($request_data["password"]);
 		$identifier = create_identifier();
@@ -44,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 				exit(0);
 			}
 
-			$user_id = $Database->insert("Users", ["first_name" => $first_name, "last_name" => $last_name, "username" => $username, "email" => $email, "password" => $passwd]);
+			$user_id = $Database->insert("Users", ["first_name" => $first_name, "last_name" => $last_name, "username" => bin2hex(random_bytes(32)), "email" => $email, "password" => $passwd]);
 
 			$Database->insert("Identifiers", ["user_id" => $user_id, "identifier" => $identifier]);
 

@@ -1,6 +1,6 @@
 <?php
 
-require("/var/www/ShiKhiIT/core/init.php");
+require("../../../core/init.php");
 
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");

@@ -1,6 +1,6 @@
 <?php
 
-require "/var/www/ShiKhiIT/core/init.php";
+require "../../../core/init.php";
 
 $identifier = $_GET["identifier"];
 
